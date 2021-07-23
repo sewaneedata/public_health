@@ -573,7 +573,7 @@ server <- function(input, output) {
     # Turns decimals into percentages if variable is in per_var
     # Adds label of country and replaces underscores on variables with spaces
     
-    pd$value <- unlist(pd$value)*100
+    pd$value <- as.numeric(unlist(pd$value))*100
     plot_text <- paste(
       'Dominant HC', ' : ', str_to_title(tolower(pd$first_fqhc)), "\n" ,' Share of population served : ', round(pd$first_share*100, 2), ' % ', "\n", 'Secondary HC', ' : ', str_to_title(tolower(pd$second_fqhc)), "\n", ' Share of population served : ', round(pd$second_share*100, 2), ' % ',
       sep="") %>%
@@ -706,8 +706,7 @@ server <- function(input, output) {
                 position = "bottomleft", 
                 na.label = "NA" )
     
-    
-    
+
   })
   
 }
