@@ -59,8 +59,7 @@ per_var <- c('Adult_Smoking', 'Adult_Obesity', 'Flu_Vaccinations',
              "blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.", 
              "uncontrolled.diabetes...9.", "hiv.linkage.to.care", 
              "patients.at.or.below.200..of.poverty", 
-             "patients.at.or.below.100..of.poverty","uninsured", "medicaid.chip",
-             "medicare", "other.third.party")
+             "patients.at.or.below.100..of.poverty","uninsured", "medicaid.chip", "medicare", "other.third.party", 'first_share', 'second_share', 'third_share', 'fourth_share', 'fifth_share', 'low_income_pen', 'tot_pop_pen', 'uninsured_pen', 'medicaid_pen', 'uninsured', 'medicaid_pub_ins', 'medicaid_priv_ins',' pop_poverty', 'pop_hispanic_latino', 'pop_black', 'pop_asian', 'pop_ai_asian', 'pop_nh', 'pop_opi', 'pop_white', 'pop_mixed', 'pop_medicaid_pub', 'pop_medicaid_priv', 'pop_school_age', 'pop_65_and_up', 'pop_unemployed', 'pop_houses_limited_english', 'pop_less_than_high_school', 'pop_vets', 'pop_disability', 'pop_unins_under_20')
 
 # Reading in googlesheet team manually worked on
 health_data <- read_sheet('https://docs.google.com/spreadsheets/d/1uLIrv4xXrhZseOtRSscWtkuYJkeixcyIpB-i8A6d4ZU/edit?ts=60e89447#gid=658962581', sheet = 2)
@@ -572,8 +571,13 @@ server <- function(input, output) {
     save(pd, file = 'covid.rda')
     # Turns decimals into percentages if variable is in per_var
     # Adds label of country and replaces underscores on variables with spaces
-    
-    pd$value <- as.numeric(unlist(pd$value))*100
+    if(pv %in% per_var){
+      pd$value <- as.numeric(unlist(pd$value))*100
+      
+    } else {
+      pd$value <- as.numeric(unlist(pd$value))
+      
+    }
     plot_text <- paste(
       'Dominant HC', ' : ', str_to_title(tolower(pd$first_fqhc)), "\n" ,' Share of population served : ', round(pd$first_share*100, 2), ' % ', "\n", 'Secondary HC', ' : ', str_to_title(tolower(pd$second_fqhc)), "\n", ' Share of population served : ', round(pd$second_share*100, 2), ' % ',
       sep="") %>%
