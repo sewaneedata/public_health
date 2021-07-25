@@ -35,11 +35,11 @@ uds$county <- gsub(' County', '', uds$county)
 uds <- uds %>% mutate(county = ifelse(county == 'DeKalb', 'Dekalb',
                                       ifelse(county == 'Van Buren', 'Van_Buren', county)))
 
-per_var <- c('Adult_Smoking', 'Adult_Obesity', 'Flu_Vaccinations', 
-             'Fully_Covid_Vaccinated_2021', 'At_least_1_COVID_vaccine_dose_2021', 
-             'Abortion_Rates_2013', 'Children_under_18', 'People_in_Rural_or_Isolated_settings',
-             'People_of_Color', 'Disabilities', 'Senior_Citizens', 'Physical Inactivity',
-             'White_Population_Percentage', 'children....18.years.old.', 'adult..18...64.', 
+per_var <- c('Adult_Smoking %', 'Adult_Obesity %', 'Flu_Vaccinations', 
+             'Fully_Covid_Vaccinated %', 'At_least_1_COVID_vaccine_dose %', 
+             'Abortion_Rates_2013', 'Children_under_18 %', 'People_in_Rural_or_Isolated_settings %',
+             'People_of_Color', 'Disabilities', 'Senior_Citizens', 'Physical Inactivity %',
+             'White_Population(%)', 'children....18.years.old.', 'adult..18...64.', 
              'older.adults..age.65.and.over.', 'racial.and.or.ethnic.minority', 
              'hispanic.latino.ethnicity', 'black.african.american', 'asian',
              'american.indian.alaska.native', 'native.hawaiian...other.pacific.islander',
@@ -59,7 +59,7 @@ per_var <- c('Adult_Smoking', 'Adult_Obesity', 'Flu_Vaccinations',
              "blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.", 
              "uncontrolled.diabetes...9.", "hiv.linkage.to.care", 
              "patients.at.or.below.200..of.poverty", 
-             "patients.at.or.below.100..of.poverty","uninsured", "medicaid.chip", "medicare", "other.third.party", 'first_share', 'second_share', 'third_share', 'fourth_share', 'fifth_share', 'low_income_pen', 'tot_pop_pen', 'uninsured_pen', 'medicaid_pen', 'uninsured', 'medicaid_pub_ins', 'medicaid_priv_ins',' pop_poverty', 'pop_hispanic_latino', 'pop_black', 'pop_asian', 'pop_ai_asian', 'pop_nh', 'pop_opi', 'pop_white', 'pop_mixed', 'pop_medicaid_pub', 'pop_medicaid_priv', 'pop_school_age', 'pop_65_and_up', 'pop_unemployed', 'pop_houses_limited_english', 'pop_less_than_high_school', 'pop_vets', 'pop_disability', 'pop_unins_under_20')
+             "patients.at.or.below.100..of.poverty","uninsured", "medicaid.chip", "medicare", "other.third.party", 'first_share', 'second_share', 'third_share', 'fourth_share', 'fifth_share', 'low_income_pen', 'tot_pop_pen', 'uninsured_pen', 'medicaid_pen', 'uninsured', 'medicaid_pub_ins', 'medicaid_priv_ins',' pop_poverty', 'pop_hispanic_latino', 'pop_black', 'pop_asian', 'pop_ai_asian', 'pop_nh', 'pop_opi', 'pop_white', 'pop_mixed', 'pop_medicaid_pub', 'pop_medicaid_priv', 'pop_school_age', 'pop_65_and_up', 'pop_unemployed', 'pop_houses_limited_english', 'pop_less_than_high_school', 'pop_vets', 'pop_disability', 'pop_unins_under_200', "Flu_Vaccinations_Medicare_Enrollees", "Fully_Covid_Vaccinated", "At_least_1_COVID_vaccine_dose","People_in_Rural_or_Isolated_settings","Physical Inactivity","American_Indian_and_Alaskan_Native_Population_Percentage","Percent_in_Poverty","Percent_on_Tenncare","pop_poverty", 'pop_minority', 'pop_uninsured', 'pop_unins_under_200')
 
 # Reading in googlesheet team manually worked on
 health_data <- read_sheet('https://docs.google.com/spreadsheets/d/1uLIrv4xXrhZseOtRSscWtkuYJkeixcyIpB-i8A6d4ZU/edit?ts=60e89447#gid=658962581', sheet = 2)
@@ -78,7 +78,9 @@ health_data <- left_join(health_data, uds, by = c('County'= 'county', 'Year'= 'y
 # health_data <- tibble (health_data)
 
 # for within county choices 
-gross_numbers <- c("Total_Population","Health_Outcomes_Rankings","Quality_of_Life","Premature_Deaths","Health_Factors_Rankings","Alcohol_impaired_Driving_Deaths","Driving_Deaths","Uninsured","Number_of_Primary_Care_Physicians","Dentist_Providers","Mental_Health_Providers","Covid_Cases","Covid_Deaths","People_with_HIV","White_Population","Black_African_American_Population","American_Indian_and_Alaskan_Native_Population","Asian_Population","Native_Hawaiian_and_Other_Pacific_Islander_Population","Other_Race","Two_Or_More_Races","FQHCs_ and_LALs","Emergency_Dept","Hospital_Closures","Hospitals","Licensed_Mental_Health_Treatment_Sites","Licensed_Substance_Abuse_Treatment_Sites","Overdose_Deaths","tot_pop","num_fqhc","num_patients","pop_low_income","unserved_low_income","unserved_total_pop","unserved_uninsured","unserved_medicaid_public","unserved_medicaid_private")
+gross_numbers <- c("Total_Population","Health_Outcomes_Rankings (/95)","Quality_of_Life","Premature_Deaths (deaths before 75 yrs, per 100,000 people)","Life_Expectancy", "Health_Factors_Rankings (/95)","Alcohol_impaired_Driving_Deaths","Alcohol_impaired_Driving_Deaths_per_1000_people","Driving_Deaths","Driving_Deaths_per_1000_people","Uninsured","Uninsured_per_1000_people","Number_of_Primary_Care_Physicians","Number_of_Primary_Care_Physicians_per_1000_people","Dentist_Providers","Dentist_Providers_per_1000","Mental_Health_Providers","Mental_Health_Providers_per_1000_people","Covid_Cases","Covid_Deaths","People_with_HIV","White_Population","Black_African_American_Population","American_Indian_and_Alaskan_Native_Population","Asian_Population","Native_Hawaiian_and_Other_Pacific_Islander_Population","Other_Race","Two_Or_More_Races","FQHCs_ and_LALs","Emergency_Dept","Hospital_Closures","Hospitals","Licensed_Mental_Health_Treatment_Sites","Licensed_Substance_Abuse_Treatment_Sites","Overdose_Deaths","tot_pop","num_fqhc","num_patients","pop_low_income","unserved_low_income","unserved_total_pop","unserved_uninsured","unserved_medicaid_public","unserved_medicaid_private","Number_of_Opoid_Prescriptions_Per_1000")
+
+
 # create two vectors of columns, one from health data and one from uds to identify source later
 uds_cols <- names(uds)
 health_data_cols <- names(health_data)
@@ -493,14 +495,17 @@ server <- function(input, output) {
     cn <- input$county_name_2
     pv <- input$plot_var_2
     py <- input$plot_year_2
-    save(cn, pv, py, file = 'inputs.rda')
+    
+    
+      
     if(cn ==''){
       NULL
     } else {
       library(tidyr)
       # The dataset will filter by the year the user selects
       pd <- health_data %>% filter(County == cn,
-                                   Year == py) %>% select(pv, first_fqhc, first_share, second_fqhc, second_share) 
+                                   Year == py) %>% 
+        select(pv, first_fqhc, first_share, second_fqhc, second_share) 
       
       f_name <- pd$first_fqhc
       f_share <- pd$first_share
@@ -514,19 +519,28 @@ server <- function(input, output) {
       # save(cn, pd, pv,py, file = 'temp.rda')
       
       # Turns decimals into percentages if variable is in per_var
-      # Adds label of country and replaces underscores on variables with spaces
+      # Adds label of county and replaces underscores on variables with spaces
       
       # pd$value <- as.numeric(pd$value)
       # pd$value <- pd$value*100
       plot_text <- paste(
         'Dominant HC', ' : ', str_to_title(tolower(f_name)), "\n" 
-        ,' Share of population served : ', round(f_share*100, 2), ' % ', "\n", 
+        ,' Share of FQHC patients served : ', round(f_share*100, 2), ' % ', "\n", 
         'Secondary HC', ' : ', str_to_title(tolower(s_name)), "\n", 
-        ' Share of population served : ', round(s_share*100, 2), ' % ',
+        ' Share of FQHC patients served : ', round(s_share*100, 2), ' % ',
         sep="") %>%
         lapply(htmltools::HTML)
       # 
-      
+      pd$value <- round( as.numeric(unlist(pd$value)), 2 )
+      # if(pv %in% per_var){
+      #   for(i in 1:length(pd$value)){
+      #     message
+      #     message("i : ", i)
+      #     if( pd$value[i] <= 1 ){ 
+      #       pd$value[i] <-  pd$value[i]*100
+      #     }
+      #   }
+      # }
       # Creation of graph
       p <- ggplot(data = pd,
                   aes(x = gsub('_', ' ', key),
@@ -535,7 +549,7 @@ server <- function(input, output) {
         geom_bar(stat = 'identity',
                  color = 'Blue',
                  fill = 'cornflowerblue') +
-        geom_text(aes(label = round(value,2))) +
+        geom_text(aes(label = value)) +
         labs(title = paste('Compare county health'),
              x = '',
              y = 'Value') +
@@ -560,15 +574,15 @@ server <- function(input, output) {
     # Naming inputs
     cn <- input$county_name
     pv <- input$plot_var
+    idx <- which( hd_choices == pv )
+    y_lab = hd_labels[idx]
     py <- input$plot_year
-    
+
     # The dataset will filter by the year the user selects
     pd <- health_data %>% filter(County %in% cn,
                                  Year == py)
     
     names(pd)[names(pd) == pv] <- 'value'
-    # save(cn, pd, pv,py, file = 'temp.rda')
-    save(pd, file = 'covid.rda')
     # Turns decimals into percentages if variable is in per_var
     # Adds label of country and replaces underscores on variables with spaces
     if(pv %in% per_var){
@@ -579,7 +593,10 @@ server <- function(input, output) {
       
     }
     plot_text <- paste(
-      'Dominant HC', ' : ', str_to_title(tolower(pd$first_fqhc)), "\n" ,' Share of population served : ', round(pd$first_share*100, 2), ' % ', "\n", 'Secondary HC', ' : ', str_to_title(tolower(pd$second_fqhc)), "\n", ' Share of population served : ', round(pd$second_share*100, 2), ' % ',
+      'Dominant HC : ', str_to_title(tolower(pd$first_fqhc)), "\n",
+      ' Share of FQHC patients served : ', round(pd$first_share*100, 2), ' % ', "\n",
+      'Secondary HC : ', str_to_title(tolower(pd$second_fqhc)), "\n", 
+      ' Share of FQHC patients served : ', round(pd$second_share*100, 2), ' % ',
       sep="") %>%
       lapply(htmltools::HTML)
     
@@ -587,12 +604,13 @@ server <- function(input, output) {
     # Creation of graph
     p <- ggplot(data = pd,
                 aes(x = County,
-                    y = value, text = plot_text)) +
+                    y = value, 
+                    text = plot_text)) +
       geom_bar(stat = 'identity',
                color = 'Blue',
                fill = 'cornflowerblue') +
       geom_text(aes(label = round(value,2)))+
-      labs(title = paste('Compare county health')) +
+      labs(title = 'Compare county health') +
       ggthemes:: theme_pander()
     
     # Changes decimals to percentages
@@ -601,8 +619,10 @@ server <- function(input, output) {
       
     } 
     # Changes underscores to spaces and flips coordinates
-    p <- p + labs(y=gsub('_', ' ', pv)) + coord_flip() 
-    ggplotly(p, tooltip = 'text') %>%  style(textposition = 'right') %>% layout(hoverlabel = list(bgcolor = 'white')) %>%
+    p <- p + labs(y=y_lab) + coord_flip() 
+    ggplotly(p, tooltip = 'text') %>%  
+      style(textposition = 'right') %>% 
+      layout(hoverlabel = list(bgcolor = 'white')) %>%
       config(displayModeBar = F)
   })
   
@@ -663,20 +683,26 @@ server <- function(input, output) {
     map_palette <- colorNumeric(palette = brewer.pal(9, "Blues"), 
                                 domain=shp@data$value,
                                 na.color="black") 
-    # Labels counties on map and replaces underscores with spaces
-    map_text <- paste(
-      "County : ", shp@data$COUNTY, "<br/>",
-      "Dominant HC : ", str_to_title(tolower(shp@data$first_fqhc)),"<br/>",
-      'Share of population served :', round(shp@data$first_share*100,2),' % ',  "<br/>",
-      'Secondary HC : ', str_to_title(tolower(shp@data$second_fqhc)), "<br/>",
-      ' Share of population served : ', round(shp@data$second_share*100,2), ' % ',
-      sep="") %>%
-      lapply(htmltools::HTML)
     
-    # plot_text <- paste(
-    #   'Dominant HC', ' : ', str_to_title(tolower(pd$first_fqhc)), "\n" ,' Share of population served : ', round(pd$first_share*100, 2), ' % ', "\n", 'Secondary HC', ' : ', str_to_title(tolower(pd$second_fqhc)), "\n", ' Share of population served : ', round(pd$second_share*100, 2), ' % ',
-    #   sep="") %>%
-    #   lapply(htmltools::HTML)
+    # Labels counties on map and replaces underscores with spaces
+    message('mv is ', mv)
+    message('shp@data$value is ', shp@data$value[1:5])
+    val <- shp@data$value
+    if(mv %in% per_var){
+      val <- val * 100
+      val <- paste0(val, '%')
+    }
+    
+     map_text <- paste(
+       "County : ", shp@data$COUNTY, "<br/>",
+       "Value : ", val, "<br/>",
+       "Dominant HC : ", str_to_title(tolower(shp@data$first_fqhc)),"<br/>",
+       'Share of population served : ', round(shp@data$first_share*100,2),' % ',  "<br/>",
+       'Secondary HC : ', str_to_title(tolower(shp@data$second_fqhc)), "<br/>",
+       ' Share of population served : ', round(shp@data$second_share*100,2), ' % ',
+       sep="") %>%
+       lapply(htmltools::HTML)
+    
     
     # Creates map
     leaflet(shp) %>%
