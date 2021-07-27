@@ -332,56 +332,62 @@ server <- function(input, output) {
       # If user chooses single county
     } else {
       pg <- input$per_gross
-      # Shows correct options for whole number choice
-      if(pg=='Gross number'){
-        var_choices <- gross_numbers
+      # here do null condition
+      if(is.null(pg)){
+        NULL
       } else {
-        # Shows correct options for percentage choice
-        var_choices<- names(health_data)[!names(health_data) %in% gross_numbers]
-        var_choices <- var_choices[!var_choices %in% c('County', 'Year',
-                                                       'FQHC_Cherokee_or_Ocoee',
-                                                       'Nonprofit_clinics',
-                                                       "Rural_Urban","x",
-                                                       "first_fqhc","first_share",
-                                                       "second_fqhc","second_share",
-                                                       "third_fqhc","third_share",
-                                                       "fourth_fqhc","fourth_share",
-                                                       "fifth_fqhc","fifth_share")]
-      }
-      save(var_choices, gross_numbers, file = 'temp.rda')
-      fluidRow(
-        column(3,
-               
-               # Allows user to choose one county from health_data County col
-               selectInput(inputId = 'county_name_2',
-                           label = 'Choose a county',
-                           choices = health_data$County,
-                           selected = TRUE,
-                           multiple = FALSE)),
-        column(3,
-               
-               # Allows user to choose a health variable from health_data cols
-               selectInput(inputId = 'plot_var_2',
-                           label = 'Choose a variable to plot',
-                           choices = var_choices,
-                           selected = var_choices[1:3],
-                           multiple = TRUE) ),
-        column(3,
-               
-               # Allows user to choose a year from health_data Year col      
-               selectInput(inputId = 'plot_year_2',
-                           label = 'Choose a year to plot',
-                           choices = unique(health_data$Year),
-                           selected = '2019')),
-        
-        
+        # Shows correct options for whole number choice
+        if(pg=='Gross number'){
+          var_choices <- gross_numbers
+        } else {
+          # Shows correct options for percentage choice
+          var_choices<- names(health_data)[!names(health_data) %in% gross_numbers]
+          var_choices <- var_choices[!var_choices %in% c('County', 'Year',
+                                                         'FQHC_Cherokee_or_Ocoee',
+                                                         'Nonprofit_clinics',
+                                                         "Rural_Urban","x",
+                                                         "first_fqhc","first_share",
+                                                         "second_fqhc","second_share",
+                                                         "third_fqhc","third_share",
+                                                         "fourth_fqhc","fourth_share",
+                                                         "fifth_fqhc","fifth_share")]
+        }
+        save(var_choices, gross_numbers, file = 'temp.rda')
         fluidRow(
-          column(12,
-                 # Places graph next to selection inputs
-                 plotlyOutput('county_plot_2'))
+          column(3,
+                 
+                 # Allows user to choose one county from health_data County col
+                 selectInput(inputId = 'county_name_2',
+                             label = 'Choose a county',
+                             choices = health_data$County,
+                             selected = TRUE,
+                             multiple = FALSE)),
+          column(3,
+                 
+                 # Allows user to choose a health variable from health_data cols
+                 selectInput(inputId = 'plot_var_2',
+                             label = 'Choose a variable to plot',
+                             choices = var_choices,
+                             selected = var_choices[1:3],
+                             multiple = TRUE) ),
+          column(3,
+                 
+                 # Allows user to choose a year from health_data Year col      
+                 selectInput(inputId = 'plot_year_2',
+                             label = 'Choose a year to plot',
+                             choices = unique(health_data$Year),
+                             selected = '2019')),
+          
+          
+          fluidRow(
+            column(12,
+                   # Places graph next to selection inputs
+                   plotlyOutput('county_plot_2'))
+          )
+          
         )
-        
-      )
+      }
+     
     }
     
   })
