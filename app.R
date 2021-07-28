@@ -328,10 +328,10 @@ server <- function(input, output) {
       } else {
         # Shows correct options for whole number choice
         if(pg=='Gross number'){
-          var_choices <- gross_numbers
+          var_choices <- hd_choices[hd_choices %in%gross_numbers]
         } else {
           # Shows correct options for percentage choice
-          var_choices<- names(health_data)[!names(health_data) %in% gross_numbers]
+          var_choices<- hd_choices[!hd_choices %in% gross_numbers]
           var_choices <- var_choices[!var_choices %in% c('County', 'Year',
                                                          'FQHC_Cherokee_or_Ocoee',
                                                          'Nonprofit_clinics',
@@ -478,6 +478,8 @@ server <- function(input, output) {
                                    Year == py) %>%
         select(pv, first_fqhc, first_share, second_fqhc, second_share)
       
+      save(pd, file = 'temp.rda')
+      pd[,pv][grepl('NA', pd[, pv])] <- NA
       # If there is data for year chosen show plot
       if(!all(is.na(pd[,pv]))){
         
