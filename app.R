@@ -38,8 +38,6 @@ uds$county <- gsub(' County', '', uds$county)
 uds <- uds %>% mutate(county = ifelse(county == 'DeKalb', 'Dekalb',
                                       ifelse(county == 'Van Buren', 'Van_Buren', county)))
 
-
-
 # List all variables that are percentages
 per_var <- c('Adult_Smoking %', 'Adult_Obesity %', 'Flu_Vaccinations',
              'Fully_Covid_Vaccinated %', 'At_least_1_COVID_vaccine_dose %',
@@ -88,7 +86,6 @@ health_data <- read_sheet('https://docs.google.com/spreadsheets/d/1uLIrv4xXrhZse
 
 # Set UDS data to year available
 uds$year <- 2019
-
 
 # Join health data with UDS data by county and year
 health_data <- left_join(health_data, uds, by = c('County'= 'county', 'Year'= 'year'))
@@ -144,7 +141,6 @@ shp <- readOGR('county_shape/')
 
 # Reproject shp to show readable lat and long coordinates
 shp <- spTransform(shp, CRS("+proj=longlat +datum=WGS84"))
-
 
 ui <- dashboardPage(
   # Title of dashboard
@@ -215,14 +211,10 @@ ui <- dashboardPage(
                      )
                    )
           )
-          
         )
-        
       ),
       
-      
       tabItem(
-        
         # Creation of fqhc tab
         tabName="fqhc",
         fluidRow(
@@ -290,7 +282,6 @@ server <- function(input, output) {
                   choices = c('Percent', 'Gross number'),
                   selected = 'Percent')
     }
-    
   })
   
   # User chooses how many counties to compare
@@ -327,7 +318,6 @@ server <- function(input, output) {
                  # Places graph next to selection inputs
                  plotlyOutput('county_plot'))
         )
-        
       )
       # If user chooses single county
     } else {
@@ -352,10 +342,9 @@ server <- function(input, output) {
                                                          "fourth_fqhc","fourth_share",
                                                          "fifth_fqhc","fifth_share")]
         }
-        save(var_choices, gross_numbers, file = 'temp.rda')
+        # save(var_choices, gross_numbers, file = 'temp.rda')
         fluidRow(
           column(3,
-                 
                  # Allows user to choose one county from health_data County col
                  selectInput(inputId = 'county_name_2',
                              label = 'Choose a county',
@@ -363,7 +352,6 @@ server <- function(input, output) {
                              selected = TRUE,
                              multiple = FALSE)),
           column(3,
-                 
                  # Allows user to choose a health variable from health_data cols
                  selectInput(inputId = 'plot_var_2',
                              label = 'Choose a variable to plot',
@@ -371,27 +359,21 @@ server <- function(input, output) {
                              selected = var_choices[1:3],
                              multiple = TRUE) ),
           column(3,
-                 
                  # Allows user to choose a year from health_data Year col      
                  selectInput(inputId = 'plot_year_2',
                              label = 'Choose a year to plot',
                              choices = unique(health_data$Year),
                              selected = '2019')),
           
-          
           fluidRow(
             column(12,
                    # Places graph next to selection inputs
                    plotlyOutput('county_plot_2'))
           )
-          
         )
       }
-     
     }
-    
   })
-  
   
   output$fqhc_table <-DT::renderDataTable({
     
@@ -511,7 +493,6 @@ server <- function(input, output) {
         # Unlists variables
         pd <- pd %>% gather()
         
-        
         # Creates hover over text
         plot_text <- paste(
           'Dominant HC', ' : ', str_to_title(tolower(f_name)), "\n"
@@ -583,7 +564,6 @@ server <- function(input, output) {
     
   })
   
-  
   output$county_plot <- renderPlotly({
     
     # Naming inputs
@@ -636,8 +616,8 @@ server <- function(input, output) {
       # Changes decimals to percentages and adds %
       if(pv %in% per_var){
         p <- p + scale_y_continuous(labels = function(x) paste0(x, "%"))  
-        
       }
+      
       # Labels y axis and flips coordinates
       p <- p + labs(y=y_lab) + coord_flip()
       
@@ -668,7 +648,6 @@ server <- function(input, output) {
     }
     
   })
-  
   
   output$county_map <- renderLeaflet({
     
@@ -714,7 +693,6 @@ server <- function(input, output) {
         sep="") %>%
         lapply(htmltools::HTML)
       
-      
       # Creates map
       leaflet(shp) %>%
         addProviderTiles('Esri.WorldShadedRelief') %>%
@@ -756,8 +734,6 @@ server <- function(input, output) {
                   labels = NA)
       
     }
-    
-    
   })
   
 }
