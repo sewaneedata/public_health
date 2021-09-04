@@ -15,9 +15,10 @@ library(plotly)
 library(sp)
 library(Hmisc)
 library(stringr)
+library(gsheet)
 
 if(grepl('marthaclark', getwd())){
-  setwd('/Users/marthaclark/Documents/DataLab/public_health-main//')
+  setwd('/Users/marthaclark/Documents/DataLab/public_health//')
 }
 
 # Get rid of exponential numbers
@@ -82,7 +83,8 @@ per_var <- c('Adult_Smoking %', 'Adult_Obesity %', 'Flu_Vaccinations',
              'pop_minority', 'pop_uninsured', 'pop_unins_under_200')
 
 # Reading in googlesheet team manually worked on
-health_data <- read_sheet('https://docs.google.com/spreadsheets/d/1uLIrv4xXrhZseOtRSscWtkuYJkeixcyIpB-i8A6d4ZU/edit?ts=60e89447#gid=658962581', sheet = 2)
+health_data <- read.csv(text = gsheet2text('https://docs.google.com/spreadsheets/d/1uLIrv4xXrhZseOtRSscWtkuYJkeixcyIpB-i8A6d4ZU/edit?ts=60e89447#gid=658962581', format = 'csv'),
+                         stringsAsFactors=TRUE)
 
 # Set UDS data to year available
 uds$year <- 2019
@@ -155,6 +157,10 @@ ui <- dashboardPage(
         text="FQHC",
         tabName="fqhc"),
       menuItem(
+        text = 'Vaccinations',
+        tabName = 'vaccinations'
+      ),
+      menuItem(
         text = 'About',
         tabName = 'about')
     )
@@ -217,29 +223,82 @@ ui <- dashboardPage(
       tabItem(
         # Creation of fqhc tab
         tabName="fqhc",
+        tabsetPanel(
+          tabPanel(title = 'Table',
+                   fluidPage(
+                     fluidRow(
+                       column(4,
+                              # Allows user to choose health centers from fqhc data
+                              selectInput(inputId = 'health_center_name',
+                                          label = 'Choose a health center',
+                                          choices = fqhc$health.center.name,
+                                          multiple = TRUE,
+                                          selected = fqhc$health.center.name[1:5])
+                       ),
+                       
+                       column(4,
+                              
+                              # Allows user to choose what kind of fqhc variable to view in table
+                              selectInput(inputId = 'variable_type',
+                                          label = 'Choose a type of variable',
+                                          choices = c('Demographics', 'Patient Characteristics',
+                                                      'Services', 'Clinical', 'Cost'),
+                                          selected = 'Services')    
+                       )),
+                     
+                     fluidRow(
+                       column(12,
+                              DT::dataTableOutput('fqhc_table')
+                              
+                       )
+                     )
+                   )
+                 ),
+          tabPanel(title='Chart',
+                   fluidPage(
+                     fluidRow(
+                       column(4,
+                              # Allows user to choose health centers from fqhc data
+                              selectInput(inputId = 'health_center_name',
+                                          label = 'Choose a health center',
+                                          choices = fqhc$health.center.name,
+                                          multiple = TRUE,
+                                          selected = fqhc$health.center.name[1:5])
+                       ),
+                       
+                       column(4,
+                              
+                              # Allows user to choose what kind of fqhc variable to view in table
+                              selectInput(inputId = 'variable_type',
+                                          label = 'Choose a type of variable',
+                                          choices = c('Demographics', 'Patient Characteristics',
+                                                      'Services', 'Clinical', 'Cost'),
+                                          selected = 'Services')    
+                       )),
+                     
+                     fluidRow(
+                       column(12,
+
+                       )
+                     )
+                   )
+                 )
+               )
+             ),
+      
+      tabItem(
+        # Creation of vaccinations tab
+        tabName="vaccinations",
         fluidRow(
-          column(4,
-                 # Allows user to choose health centers from fqhc data
-                 selectInput(inputId = 'health_center_name',
-                             label = 'Choose a health center',
-                             choices = fqhc$health.center.name,
-                             multiple = TRUE,
-                             selected = fqhc$health.center.name[1:5])
-          ),
+
           
           column(4,
-                 
-                 # Allows user to choose what kind of fqhc variable to view in table
-                 selectInput(inputId = 'variable_type',
-                             label = 'Choose a type of variable',
-                             choices = c('Demographics', 'Patient Characteristics',
-                                         'Services', 'Clinical', 'Cost'),
-                             selected = 'Services')    
+    
           )),
         
         fluidRow(
           column(12,
-                 DT::dataTableOutput('fqhc_table')
+                 uiOutput('vaccination_plot')
                  
           )
         )
@@ -342,7 +401,7 @@ server <- function(input, output) {
                                                          "fourth_fqhc","fourth_share",
                                                          "fifth_fqhc","fifth_share")]
         }
-        # save(var_choices, gross_numbers, file = 'temp.rda')
+
         fluidRow(
           column(3,
                  # Allows user to choose one county from health_data County col
@@ -736,6 +795,33 @@ server <- function(input, output) {
                   labels = NA)
       
     }
+  })
+  
+  output$vaccination_plot <- renderPlotly({
+    
+    pd <- health_data %>% 
+      filter(Year== 2020 || Year == 2021 ) %>%
+      group_by(County) %>%
+      summarise(x= mean(Flu_Vaccinations_Medicare_Enrollees, na.rm = TRUE),
+                y = mean(as.numeric(unlist(At_least_1_COVID_vaccine_dose)), na.rm = TRUE))
+
+    
+    ggplot(data = pd,
+           aes(x = x,
+               y = y)) +
+      geom_point(alpha = 0.5) +
+      xlim(0,1) +
+      ylim(0,1) +
+      geom_smooth(se = FALSE, color = 'red', lty = 2, method = 'lm')
+    
+    fit <- lm(y~x, data = pd)
+    summary(fit)
+    
+    predictions <- predict(fit, newdata=pd)
+    pd$predicted <- predictions
+    
+    pd$residual <- pd$y-pd$predicted
+    
   })
   
 }
