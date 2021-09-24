@@ -16,7 +16,7 @@ library(sp)
 library(Hmisc)
 library(stringr)
 library(gsheet)
-library(gghighlight)
+#library(gghighlight)
 library(tidyverse)
 
 if(grepl('marthaclark', getwd())){
@@ -94,7 +94,7 @@ uds$year <- 2019
 # Join health data with UDS data by county and year
 health_data <- left_join(health_data, uds, by = c('County'= 'county', 'Year'= 'year'))
 
-# List whole numbers  
+# List whole numbers
 gross_numbers <- c("Total_Population","Health_Outcomes_Rankings (/95)","Quality_of_Life","Premature_Deaths (deaths before 75 yrs, per 100,000 people)","Life_Expectancy", "Health_Factors_Rankings (/95)","Alcohol_impaired_Driving_Deaths","Alcohol_impaired_Driving_Deaths_per_1000_people","Driving_Deaths","Driving_Deaths_per_1000_people","Uninsured","Uninsured_per_1000_people","Number_of_Primary_Care_Physicians","Number_of_Primary_Care_Physicians_per_1000_people","Dentist_Providers","Dentist_Providers_per_1000","Mental_Health_Providers","Mental_Health_Providers_per_1000_people","Covid_Cases","Covid_Deaths","People_with_HIV","White_Population","Black_African_American_Population","American_Indian_and_Alaskan_Native_Population","Asian_Population","Native_Hawaiian_and_Other_Pacific_Islander_Population","Other_Race","Two_Or_More_Races","FQHCs_ and_LALs","Emergency_Dept","Hospital_Closures","Hospitals","Licensed_Mental_Health_Treatment_Sites","Licensed_Substance_Abuse_Treatment_Sites","Overdose_Deaths","tot_pop","num_fqhc","num_patients","pop_low_income","unserved_low_income","unserved_total_pop","unserved_uninsured","unserved_medicaid_public","unserved_medicaid_private","Number_of_Opoid_Prescriptions_Per_1000")
 
 
@@ -156,7 +156,7 @@ ui <- dashboardPage(
         text="Data_Portal",
         tabName="data_portal"),
       menuItem(
-        text="FQHC",
+        text="Federally Qualified Health Centers",
         tabName="fqhc"),
       menuItem(
         text = 'Vaccinations',
@@ -167,20 +167,21 @@ ui <- dashboardPage(
         tabName = 'about')
     )
   ),
-  
-  
+
+
   dashboardBody(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     ),
     tabItems(
       tabItem(
-        
+
         #Creation of explore tab
         tabName = 'data_portal',
         tabsetPanel(
-          tabPanel(title = 'Chart',
+          tabPanel(title = h4('Chart'),
                    fluidPage(
+                     br(),
                      fluidRow(
                        column(4,
                               # Choose whether to compare multiple or single counties
@@ -189,26 +190,25 @@ ui <- dashboardPage(
                                           choices = c('Between counties', 'Within counties'),
                                           selected = 'Between counties')
                        ),
-                       column(4,
-                              uiOutput('ui_per_gross'))
-                     ),
-                     
-                     uiOutput('ui_county_comparison')
+                       column(4, uiOutput('ui_per_gross'))),
+                     br(),
+                     fluidRow( column(12, uiOutput('ui_county_comparison'))),
                    )
-                   
+
           ),
-          tabPanel(title='Map',
+          tabPanel(title=h4('Map'),
+                   br(),
                    fluidPage(
                      fluidRow(
                        column(4,
-                              
+
                               # Allows user to choose a health variable from health_data cols
                               selectInput(inputId = 'map_var',
                                           label = 'Choose a variable to plot',
                                           choices = hd_choices,
                                           selected = 'Health_Factors_Rankings'),
-                              
-                              # Allows user to choose a year from health_data Year col      
+
+                              # Allows user to choose a year from health_data Year col
                               selectInput(inputId = 'map_year',
                                           label = 'Choose a year to plot',
                                           choices = unique(health_data$Year),
@@ -216,16 +216,17 @@ ui <- dashboardPage(
                        ),
                        column(8,
                               leafletOutput('county_map'))
-                       
+
                      )
                    )
           )
         )
       ),
-      
+
       tabItem(
         # Creation of fqhc tab
         tabName="fqhc",
+        br(),
         fluidRow(
           column(4,
                  # Allows user to choose health centers from fqhc data
@@ -235,94 +236,102 @@ ui <- dashboardPage(
                              multiple = TRUE,
                              selected = fqhc$health.center.name[1:5])
           ),
-          
+
           column(4,
-                 
                  # Allows user to choose what kind of fqhc variable to view in table
-                 selectInput(inputId = 'variable_type',
-                             label = 'Choose a type of variable',
+                 selectInput(inputId = 'fqhc_category',
+                             label = 'Choose a category',
                              choices = c('Demographics', 'Patient Characteristics',
                                          'Services', 'Clinical', 'Cost'),
-                             selected = 'Services')    
-          )
+                             selected = 'Services'))
+
         ),
+        br(),
         fluidRow(
-          column(12, 
+          column(12,
                  tabsetPanel(
-            tabPanel(title = 'Table',
-                   fluidRow(
-                     column(12,
-                            DT::dataTableOutput('fqhc_table')
-                            
-                     )
-                   )
-                   ),
-                   tabPanel(title = 'Chart',
+                   tabPanel(title = h4('Chart explorer'),
+                            br(),
                             fluidRow(
-                              plotlyOutput('fqhc_chart')
-                              
+                              column(3,
+                                     uiOutput('ui_fqhc_variable'),
+                                     br(),
+                                     checkboxInput('fqhc_filter','Filter to seleted FQHCs?',value=FALSE)
+                              ),
+                              column(9,plotOutput('fqhc_chart',height='500px')))
+                   ),
+                   tabPanel(title = h4('Detailed Table'),
+                            br(),
+                            fluidRow(
+                              column(12,
+                                     DT::dataTableOutput('fqhc_table')
+                              )
                             )
                    )
-                   
+                 )
           )
         )
-        )
-        ),
-      
+      ),
+
       tabItem(
-        # Creation of vaccinations tab
         tabName="vaccinations",
+        br(),
         fluidRow(
-          
-          
           column(4,
                  selectInput(inputId = 'county_name_vacc',
                              label = 'Choose a county',
-                             choices = health_data$County)
-                 )),
-          
+                             choices = health_data$County,
+                             selected=runif(1:nrow(health_data),1)))),
+
+        fluidRow(column(12, plotlyOutput('vaccination_plot')))),
+
+      tabItem(
+        tabName = 'about',
+        fluidPage(
+          br(),
           fluidRow(
-            column(12,
-                   plotlyOutput('vaccination_plot')
-                   
-            )
-          )
-        ),
-        
-        tabItem(
-          
-          #Creation of about tab
-          tabName = 'about',
-          fluidPage(
-            fluidRow(
-              div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
-              h4('Built in partnership with ',
-                 a(href = 'http://datalab.sewanee.edu',
-                   target='_blank', 'Sewanee Datalab'),
-                 align = 'center'),
-              p('Empowering research and analysis through collaborative data science.', align = 'center'),
-              div(a(actionButton(inputId = "email", label = "clarkml0@sewanee.edu",
-                                 icon = icon("envelope", lib = "font-awesome")),
-                    href="mailto:clarkml0@sewanee.edu",
-                    align = 'center')),
-              style = 'text-align:center;'
-            )
+            #div(img(src='logo_clear.png', align = "center"), style="text-align: center;"),
+            h4('Built in partnership with ',
+               a(href = 'http://datalab.sewanee.edu',
+                 target='_blank', 'Sewanee Datalab'),
+               align = 'center'),
+            p('Empowering research and analysis through collaborative data science.', align = 'center'),
+            div(a(actionButton(inputId = "email", label = "clarkml0@sewanee.edu",
+                               icon = icon("envelope", lib = "font-awesome")),
+                  href="mailto:clarkml0@sewanee.edu",
+                  align = 'center')),
+            style = 'text-align:center;'
           )
         )
       )
     )
   )
-  
-  
-  # Server
-  server <- function(input, output) {
-    
-<<<<<<< HEAD
+)
+
+
+# Server
+server <- function(input, output) {
+
+  # If user wants to compare single county choose percent or gross number to compare
+  output$ui_per_gross <- renderUI({
+    cc <- input$compare_county
+    if(cc != 'Between counties'){
+      selectInput('per_gross',
+                  label = 'Choose percent or gross variables',
+                  choices = c('Percent', 'Gross number'),
+                  selected = 'Percent')
+    }
+  })
+
+  # User chooses how many counties to compare
+  output$ui_county_comparison <- renderUI({
+    cc <- input$compare_county
+
     # If user chooses multiple counties
     if(cc == 'Between counties'){
       fluidRow(
         column(3,
-               
+
                # Allows user to choose counties from health_data County col
                # Shows first 10 counties by default
                selectInput(inputId = 'county_name',
@@ -337,12 +346,12 @@ ui <- dashboardPage(
                            choices = hd_choices,
                            selected = 'HCP_Total_Patients_2019')),
         column(3,
-               # Allows user to choose a year from health_data Year col      
+               # Allows user to choose a year from health_data Year col
                selectInput(inputId = 'plot_year',
                            label = 'Choose a year to plot',
                            choices = unique(health_data$Year),
                            selected = '2019')),
-        
+
         fluidRow(
           column(12,
                  # Places graph next to selection inputs
@@ -358,10 +367,10 @@ ui <- dashboardPage(
       } else {
         # Shows correct options for whole number choice
         if(pg=='Gross number'){
-          var_choices <- hd_choices[hd_choices %in%gross_numbers]
+          var_choices <- gross_numbers
         } else {
           # Shows correct options for percentage choice
-          var_choices<- hd_choices[!hd_choices %in% gross_numbers]
+          var_choices<- names(health_data)[!names(health_data) %in% gross_numbers]
           var_choices <- var_choices[!var_choices %in% c('County', 'Year',
                                                          'FQHC_Cherokee_or_Ocoee',
                                                          'Nonprofit_clinics',
@@ -373,407 +382,409 @@ ui <- dashboardPage(
                                                          "fifth_fqhc","fifth_share")]
         }
 
-=======
-    # If user wants to compare single county choose percent or gross number to compare
-    output$ui_per_gross <- renderUI({
-      cc <- input$compare_county
-      if(cc != 'Between counties'){
-        selectInput('per_gross',
-                    label = 'Choose percent or gross variables',
-                    choices = c('Percent', 'Gross number'),
-                    selected = 'Percent')
-      }
-    })
-    
-    # User chooses how many counties to compare
-    output$ui_county_comparison <- renderUI({
-      cc <- input$compare_county
-      
-      # If user chooses multiple counties
-      if(cc == 'Between counties'){
->>>>>>> 383b1a5 (update app)
         fluidRow(
           column(3,
-                 
-                 # Allows user to choose counties from health_data County col
-                 # Shows first 10 counties by default
-                 selectInput(inputId = 'county_name',
+                 # Allows user to choose one county from health_data County col
+                 selectInput(inputId = 'county_name_2',
                              label = 'Choose a county',
                              choices = health_data$County,
-                             multiple = TRUE,
-                             selected = health_data$County[1:10])),
+                             selected = TRUE,
+                             multiple = FALSE)),
           column(3,
-                 # Allows user to choose one health variable from health_data cols
-                 selectInput(inputId = 'plot_var',
+                 # Allows user to choose a health variable from health_data cols
+                 selectInput(inputId = 'plot_var_2',
                              label = 'Choose a variable to plot',
-                             choices = hd_choices,
-                             selected = 'HCP_Total_Patients_2019')),
+                             choices = var_choices,
+                             selected = var_choices[1:3],
+                             multiple = TRUE) ),
           column(3,
-                 # Allows user to choose a year from health_data Year col      
-                 selectInput(inputId = 'plot_year',
+                 # Allows user to choose a year from health_data Year col
+                 selectInput(inputId = 'plot_year_2',
                              label = 'Choose a year to plot',
                              choices = unique(health_data$Year),
                              selected = '2019')),
-          
+
           fluidRow(
             column(12,
                    # Places graph next to selection inputs
-                   plotlyOutput('county_plot'))
+                   plotlyOutput('county_plot_2'))
           )
         )
-        # If user chooses single county
-      } else {
-        pg <- input$per_gross
-        # here do null condition
-        if(is.null(pg)){
-          NULL
-        } else {
-          # Shows correct options for whole number choice
-          if(pg=='Gross number'){
-            var_choices <- gross_numbers
-          } else {
-            # Shows correct options for percentage choice
-            var_choices<- names(health_data)[!names(health_data) %in% gross_numbers]
-            var_choices <- var_choices[!var_choices %in% c('County', 'Year',
-                                                           'FQHC_Cherokee_or_Ocoee',
-                                                           'Nonprofit_clinics',
-                                                           "Rural_Urban","x",
-                                                           "first_fqhc","first_share",
-                                                           "second_fqhc","second_share",
-                                                           "third_fqhc","third_share",
-                                                           "fourth_fqhc","fourth_share",
-                                                           "fifth_fqhc","fifth_share")]
-          }
-          
-          fluidRow(
-            column(3,
-                   # Allows user to choose one county from health_data County col
-                   selectInput(inputId = 'county_name_2',
-                               label = 'Choose a county',
-                               choices = health_data$County,
-                               selected = TRUE,
-                               multiple = FALSE)),
-            column(3,
-                   # Allows user to choose a health variable from health_data cols
-                   selectInput(inputId = 'plot_var_2',
-                               label = 'Choose a variable to plot',
-                               choices = var_choices,
-                               selected = var_choices[1:3],
-                               multiple = TRUE) ),
-            column(3,
-                   # Allows user to choose a year from health_data Year col      
-                   selectInput(inputId = 'plot_year_2',
-                               label = 'Choose a year to plot',
-                               choices = unique(health_data$Year),
-                               selected = '2019')),
-            
-            fluidRow(
-              column(12,
-                     # Places graph next to selection inputs
-                     plotlyOutput('county_plot_2'))
-            )
-          )
-        }
       }
-    })
-    
-    output$fqhc_table <-DT::renderDataTable({
-      
-      # Whole number variables in fqhc data
-      whole_nums <- c("total.patients", "health.center.service.grant.expenditures",
-                      'total.cost', "total.cost.per.patient", "prenatal.patients",
-                      "prenatal.patients.who.delivered", 'x', 'health.center.name',
-                      'city', 'state')  
-      
-      # Has correct decimals multiplied by 100 and rounded to percents
-      whole_nums_index <- names(fqhc) %in% whole_nums
-      fqhc[!whole_nums_index] <- apply(fqhc[!whole_nums_index], 2, function(x) round(x*100, 2))
-      
-      # When the user chooses the FQHC variable type the appropriate variables will be shown
-      vt <- input$variable_type
-      
-      if(vt== 'Demographics'){
-        pd <- fqhc %>% select(`Health Center` = health.center.name, City = city,
-                              State = state, `Total Patients` = total.patients,
-                              `Children Under 18` = children....18.years.old.,
-                              `Adults 18-64` = adult..18...64.,
-                              `Adults 65 and Older` = older.adults..age.65.and.over.,
-                              `Racial and/or Ethnic Minority` = racial.and.or.ethnic.minority,
-                              `Hispanic/Latino Ethnicity` = hispanic.latino.ethnicity,
-                              `Black/African American` = black.african.american,
-                              Asian = asian,
-                              `American Indian/Alaskan Native` = american.indian.alaska.native,
-                              `Native Hawaiian/Other Pacific Islander` = native.hawaiian...other.pacific.islander,
-                              `More Than One Race` = more.than.one.race,
-                              `Best Served in Another Language` = best.served.in.another.language)
-        
-        
-      } else if (vt == 'Patient Characteristics'){
-        pd <- fqhc %>% select(`Health Center` = health.center.name, City = city, State = state,
-                              `Patients at 200 or Under Level of Poverty` = patients.at.or.below.200..of.poverty,
-                              `Patients at 100 or Under Level of Poverty` = patients.at.or.below.100..of.poverty,
-                              Uninsured = uninsured, `Medicaid/Chip` = medicaid.chip,
-                              Medicare =medicare)
-        
-      } else if (vt == 'Services'){
-        pd <- fqhc %>% select(`Health Center` = health.center.name, City = city,
-                              State = state, Medical = medical, Dental = dental,
-                              `Mental Health` = mental.health,
-                              `Substance Abuse` = substance.abuse, Vision = vision,
-                              Enabling = enabling)
-        
-      } else if (vt == 'Clinical'){
-        pd <- fqhc %>% select(`Health Center` = health.center.name, City=city,
-                              State=state, Hypertension=hypertension, Diabetes=diabetes,
-                              Asthma=asthma, HIV=hiv, `Prenatal Patients` = prenatal.patients,
-                              `Prenatal Patients Who Delivered` = prenatal.patients.who.delivered,
-                              `Access to Prenatal Care (1st Prenatal Visit in 1st Trimester)`
-                              = access.to.prenatal.care..first.prenatal.visit.in.1st.trimester.,
-                              `Low Birth Weight` = low.birth.weight,
-                              `Cervical Cancer Screening` = cervical.cancer.screening,
-                              `Adolescent Weight Screening and Follow Up` = adolescent.weight.screening.and.follow.up,
-                              `Adult Weight Screening and Follow Up` = adult.weight.screening.and.follow.up,
-                              `Adults screened for Tobacco Use and Receiving Cessation Intervention`
-                              = adults.screened.for.tobacco.use.and.receiving.cessation.intervention,
-                              `Colorectal Cancer Screening` = colorectal.cancer.screening,
-                              `Childhood Immunization` = childhood.immunization,
-                              `Depression Screening` = depression.screening,
-                              `Dental Sealants` = dental.sealants,
-                              `Asthma Treatment` = asthma.treatment..appropriate.treatment.plan.,
-                              `Statin Therapy` =
-                                statin.therapy.for.the.prevention.and.treatment.of.cardiovascular.disease,
-                              `Heart Attack/Stroke Treatment (Aspirin Therapy for Ischemic Vascular Disease)`
-                              = heart.attack.stroke.treatment..aspirin.therapy.for.ischemic.vascular.disease.patients.,
-                              `Blood Pressure Control` =
-                                blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.,
-                              `Uncontrolled Diabetes` = uncontrolled.diabetes...9.,
-                              `HIV Linkage to Care` = hiv.linkage.to.care)
-        
-      } else{
-        pd <- fqhc %>% select(`Health Center` = health.center.name, City=city,
-                              State=state, `Health Center Service Grant Expenditures`
-                              = health.center.service.grant.expenditures,
-                              `Total Cost` = total.cost,
-                              `Total Cost per Patient` =total.cost.per.patient)
+    }
+  })
+
+  output$fqhc_table <-DT::renderDataTable({
+
+    # Whole number variables in fqhc data
+    whole_nums <- c("total.patients", "health.center.service.grant.expenditures",
+                    'total.cost', "total.cost.per.patient", "prenatal.patients",
+                    "prenatal.patients.who.delivered", 'x', 'health.center.name',
+                    'city', 'state')
+
+    # Has correct decimals multiplied by 100 and rounded to percents
+    whole_nums_index <- names(fqhc) %in% whole_nums
+    fqhc[!whole_nums_index] <- apply(fqhc[!whole_nums_index], 2, function(x) round(x*100, 2))
+
+    # Filter data to the health centers selected
+    pd <- fqhc %>% filter(health.center.name %in% input$health_center_name)
+
+    # When the user chooses the FQHC variable type the appropriate variables will be shown
+    vt <- input$fqhc_category
+
+    if(vt== 'Demographics'){
+      pd <- pd %>% select(`Health Center` = health.center.name, City = city,
+                          State = state, `Total Patients` = total.patients,
+                          `Children Under 18` = children....18.years.old.,
+                          `Adults 18-64` = adult..18...64.,
+                          `Adults 65 and Older` = older.adults..age.65.and.over.,
+                          `Racial and/or Ethnic Minority` = racial.and.or.ethnic.minority,
+                          `Hispanic/Latino Ethnicity` = hispanic.latino.ethnicity,
+                          `Black/African American` = black.african.american,
+                          Asian = asian,
+                          `American Indian/Alaskan Native` = american.indian.alaska.native,
+                          `Native Hawaiian/Other Pacific Islander` = native.hawaiian...other.pacific.islander,
+                          `More Than One Race` = more.than.one.race,
+                          `Best Served in Another Language` = best.served.in.another.language)
+
+
+    } else if (vt == 'Patient Characteristics'){
+      pd <- pd %>% select(`Health Center` = health.center.name, City = city, State = state,
+                          `Patients at 200 or Under Level of Poverty` = patients.at.or.below.200..of.poverty,
+                          `Patients at 100 or Under Level of Poverty` = patients.at.or.below.100..of.poverty,
+                          Uninsured = uninsured, `Medicaid/Chip` = medicaid.chip,
+                          Medicare =medicare)
+
+    } else if (vt == 'Services'){
+      pd <- pd %>% select(`Health Center` = health.center.name, City = city,
+                          State = state, Medical = medical, Dental = dental,
+                          `Mental Health` = mental.health,
+                          `Substance Abuse` = substance.abuse, Vision = vision,
+                          Enabling = enabling)
+
+    } else if (vt == 'Clinical'){
+      pd <- pd %>% select(`Health Center` = health.center.name, City=city,
+                          State=state, Hypertension=hypertension, Diabetes=diabetes,
+                          Asthma=asthma, HIV=hiv, `Prenatal Patients` = prenatal.patients,
+                          `Prenatal Patients Who Delivered` = prenatal.patients.who.delivered,
+                          `Access to Prenatal Care (1st Prenatal Visit in 1st Trimester)`
+                          = access.to.prenatal.care..first.prenatal.visit.in.1st.trimester.,
+                          `Low Birth Weight` = low.birth.weight,
+                          `Cervical Cancer Screening` = cervical.cancer.screening,
+                          `Adolescent Weight Screening and Follow Up` = adolescent.weight.screening.and.follow.up,
+                          `Adult Weight Screening and Follow Up` = adult.weight.screening.and.follow.up,
+                          `Adults screened for Tobacco Use and Receiving Cessation Intervention`
+                          = adults.screened.for.tobacco.use.and.receiving.cessation.intervention,
+                          `Colorectal Cancer Screening` = colorectal.cancer.screening,
+                          `Childhood Immunization` = childhood.immunization,
+                          `Depression Screening` = depression.screening,
+                          `Dental Sealants` = dental.sealants,
+                          `Asthma Treatment` = asthma.treatment..appropriate.treatment.plan.,
+                          `Statin Therapy` =
+                            statin.therapy.for.the.prevention.and.treatment.of.cardiovascular.disease,
+                          `Heart Attack/Stroke Treatment (Aspirin Therapy for Ischemic Vascular Disease)`
+                          = heart.attack.stroke.treatment..aspirin.therapy.for.ischemic.vascular.disease.patients.,
+                          `Blood Pressure Control` =
+                            blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.,
+                          `Uncontrolled Diabetes` = uncontrolled.diabetes...9.,
+                          `HIV Linkage to Care` = hiv.linkage.to.care)
+
+    } else{
+      pd <- pd %>% select(`Health Center` = health.center.name, City=city,
+                          State=state, `Health Center Service Grant Expenditures`
+                          = health.center.service.grant.expenditures,
+                          `Total Cost` = total.cost,
+                          `Total Cost per Patient` =total.cost.per.patient)
+    }
+    # Allows user to scroll through table
+    DT::datatable(pd, options = list(scrollX=TRUE))
+  })
+
+  output$ui_fqhc_variable <- renderUI({
+    vt <- input$fqhc_category
+
+    choices <- NULL
+    if(vt == 'Demographics'){
+      pd <- fqhc %>% select(`Health Center` = health.center.name, City = city,
+                            State = state, `Total Patients` = total.patients,
+                            `Children Under 18` = children....18.years.old.,
+                            `Adults 18-64` = adult..18...64.,
+                            `Adults 65 and Older` = older.adults..age.65.and.over.,
+                            `Racial and/or Ethnic Minority` = racial.and.or.ethnic.minority,
+                            `Hispanic/Latino Ethnicity` = hispanic.latino.ethnicity,
+                            `Black/African American` = black.african.american,
+                            Asian = asian,
+                            `American Indian/Alaskan Native` = american.indian.alaska.native,
+                            `Native Hawaiian/Other Pacific Islander` = native.hawaiian...other.pacific.islander,
+                            `More Than One Race` = more.than.one.race,
+                            `Best Served in Another Language` = best.served.in.another.language)
+      choices <- names(pd)
+    }
+    if(vt == 'Patient Characteristics'){
+      pd <- fqhc %>% select(`Health Center` = health.center.name, City = city, State = state,
+                            `Patients at 200 or Under Level of Poverty` = patients.at.or.below.200..of.poverty,
+                            `Patients at 100 or Under Level of Poverty` = patients.at.or.below.100..of.poverty,
+                            Uninsured = uninsured, `Medicaid/Chip` = medicaid.chip,
+                            Medicare =medicare)
+      choices <- names(pd)
+    }
+    if(vt == 'Services'){
+      pd <- fqhc %>% select(`Health Center` = health.center.name, City = city,
+                            State = state, Medical = medical, Dental = dental,
+                            `Mental Health` = mental.health,
+                            `Substance Abuse` = substance.abuse, Vision = vision,
+                            Enabling = enabling)
+      choices <- names(pd)
+    }
+    if(vt == 'Clinical'){
+      pd <- fqhc %>% select(`Health Center` = health.center.name, City=city,
+                            State=state, Hypertension=hypertension, Diabetes=diabetes,
+                            Asthma=asthma, HIV=hiv, `Prenatal Patients` = prenatal.patients,
+                            `Prenatal Patients Who Delivered` = prenatal.patients.who.delivered,
+                            `Access to Prenatal Care (1st Prenatal Visit in 1st Trimester)`
+                            = access.to.prenatal.care..first.prenatal.visit.in.1st.trimester.,
+                            `Low Birth Weight` = low.birth.weight,
+                            `Cervical Cancer Screening` = cervical.cancer.screening,
+                            `Adolescent Weight Screening and Follow Up` = adolescent.weight.screening.and.follow.up,
+                            `Adult Weight Screening and Follow Up` = adult.weight.screening.and.follow.up,
+                            `Adults screened for Tobacco Use and Receiving Cessation Intervention`
+                            = adults.screened.for.tobacco.use.and.receiving.cessation.intervention,
+                            `Colorectal Cancer Screening` = colorectal.cancer.screening,
+                            `Childhood Immunization` = childhood.immunization,
+                            `Depression Screening` = depression.screening,
+                            `Dental Sealants` = dental.sealants,
+                            `Asthma Treatment` = asthma.treatment..appropriate.treatment.plan.,
+                            `Statin Therapy` =
+                              statin.therapy.for.the.prevention.and.treatment.of.cardiovascular.disease,
+                            `Heart Attack/Stroke Treatment (Aspirin Therapy for Ischemic Vascular Disease)`
+                            = heart.attack.stroke.treatment..aspirin.therapy.for.ischemic.vascular.disease.patients.,
+                            `Blood Pressure Control` =
+                              blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.,
+                            `Uncontrolled Diabetes` = uncontrolled.diabetes...9.,
+                            `HIV Linkage to Care` = hiv.linkage.to.care)
+      choices <- names(pd)
+    }
+    if(vt=='Cost'){
+      pd <- fqhc %>% select(`Health Center Service Grant Expenditures`
+                            = health.center.service.grant.expenditures,
+                            `Total Cost` = total.cost,
+                            `Total Cost per Patient` =total.cost.per.patient)
+      choices <- names(pd)
+    }
+
+    if(!is.null(choices)){
+      choices <- choices[! choices %in% c('Health Center','City','State')]
+      selectInput(inputId = 'fqhc_variable',
+                  label = 'Choose a variable',
+                  choices = choices,
+                  selectize=FALSE,
+                  size = length(choices))
+    }
+  })
+
+  output$fqhc_chart <- renderPlot({
+    fqhc_clinics <- input$health_center_name
+    fqhc_cat <- input$fqhc_category
+    fqhc_var <- input$fqhc_variable
+
+    null_test <- c(is.null(fqhc_clinics),
+                   is.null(fqhc_cat),
+                   is.null(fqhc_var))
+    null_test <- any(null_test)
+
+    p <- ggplot()
+
+    if(! null_test){
+
+      pd <- fqhc
+
+      if(input$fqhc_filter){
+        pd <- pd %>% filter(health.center.name %in% input$health_center_name)
       }
-      # Allows user to scroll through table
-      DT::datatable(pd, options = list(scrollX=TRUE))
-      
-    })
-    
-    output$fqhc_chart <- renderPlotly({
-      cn <- input$clinic_name
-      vt <- input$variable_type_2
-      
-      
-     #pd <- fqhc %>% filter(health.center.name == cn)
-     
-     this_fqhc <- fqhc
-     column_we_want <- which(names(this_fqhc) == vt) 
-     this_fqhc$value <- this_fqhc[,column_we_want]
-     
-      p <- ggplotly(data = this_fqhc,
-                    aes(x = health.center.name,
-                        y = value) +
-                      geom_bar(stat = 'identity', 
-                               color = "Blue",
-                               fill = "cornflowerblue") +
-                      labs(title = paste0('Compare FQHCs'),
-                           x = '',
-                           y = 'Value'
-                      ) +
-                      ggthemes:: theme_pander()
-      )
-    })
-    
-<<<<<<< HEAD
+
+      if(fqhc_cat == 'Demographics'){
+        pd <- pd %>% select(`Health Center` = health.center.name, City = city,
+                            State = state, `Total Patients` = total.patients,
+                            `Children Under 18` = children....18.years.old.,
+                            `Adults 18-64` = adult..18...64.,
+                            `Adults 65 and Older` = older.adults..age.65.and.over.,
+                            `Racial and/or Ethnic Minority` = racial.and.or.ethnic.minority,
+                            `Hispanic/Latino Ethnicity` = hispanic.latino.ethnicity,
+                            `Black/African American` = black.african.american,
+                            Asian = asian,
+                            `American Indian/Alaskan Native` = american.indian.alaska.native,
+                            `Native Hawaiian/Other Pacific Islander` = native.hawaiian...other.pacific.islander,
+                            `More Than One Race` = more.than.one.race,
+                            `Best Served in Another Language` = best.served.in.another.language)
+      }
+      if(fqhc_cat == 'Patient Characteristics'){
+        pd <- pd %>% select(`Health Center` = health.center.name, City = city, State = state,
+                            `Patients at 200 or Under Level of Poverty` = patients.at.or.below.200..of.poverty,
+                            `Patients at 100 or Under Level of Poverty` = patients.at.or.below.100..of.poverty,
+                            Uninsured = uninsured, `Medicaid/Chip` = medicaid.chip,
+                            Medicare =medicare)
+      }
+      if(fqhc_cat == 'Services'){
+        pd <- pd %>% select(`Health Center` = health.center.name, City = city,
+                            State = state, Medical = medical, Dental = dental,
+                            `Mental Health` = mental.health,
+                            `Substance Abuse` = substance.abuse, Vision = vision,
+                            Enabling = enabling)
+      }
+      if(fqhc_cat == 'Clinical'){
+        pd <- pd %>% select(`Health Center` = health.center.name, City=city,
+                            State=state, Hypertension=hypertension, Diabetes=diabetes,
+                            Asthma=asthma, HIV=hiv, `Prenatal Patients` = prenatal.patients,
+                            `Prenatal Patients Who Delivered` = prenatal.patients.who.delivered,
+                            `Access to Prenatal Care (1st Prenatal Visit in 1st Trimester)`
+                            = access.to.prenatal.care..first.prenatal.visit.in.1st.trimester.,
+                            `Low Birth Weight` = low.birth.weight,
+                            `Cervical Cancer Screening` = cervical.cancer.screening,
+                            `Adolescent Weight Screening and Follow Up` = adolescent.weight.screening.and.follow.up,
+                            `Adult Weight Screening and Follow Up` = adult.weight.screening.and.follow.up,
+                            `Adults screened for Tobacco Use and Receiving Cessation Intervention`
+                            = adults.screened.for.tobacco.use.and.receiving.cessation.intervention,
+                            `Colorectal Cancer Screening` = colorectal.cancer.screening,
+                            `Childhood Immunization` = childhood.immunization,
+                            `Depression Screening` = depression.screening,
+                            `Dental Sealants` = dental.sealants,
+                            `Asthma Treatment` = asthma.treatment..appropriate.treatment.plan.,
+                            `Statin Therapy` =
+                              statin.therapy.for.the.prevention.and.treatment.of.cardiovascular.disease,
+                            `Heart Attack/Stroke Treatment (Aspirin Therapy for Ischemic Vascular Disease)`
+                            = heart.attack.stroke.treatment..aspirin.therapy.for.ischemic.vascular.disease.patients.,
+                            `Blood Pressure Control` =
+                              blood.pressure.control..hypertensive.patients.with.blood.pressure...140.90.,
+                            `Uncontrolled Diabetes` = uncontrolled.diabetes...9.,
+                            `HIV Linkage to Care` = hiv.linkage.to.care)
+      }
+      if(fqhc_cat=='Cost'){
+        pd <- pd %>% select(`Health Center Service Grant Expenditures`
+                            = health.center.service.grant.expenditures,
+                            `Total Cost` = total.cost,
+                            `Total Cost per Patient` =total.cost.per.patient)
+      }
+
+
+      column_we_want <- which(names(pd) == fqhc_var)
+
+      pd$value <- pd[,column_we_want]
+
+      pd <- pd %>%
+        filter(!is.na(value)) %>%
+        arrange(value) %>%
+        mutate(rank=1:n())
+
+      p <- ggplot(data = pd,
+                  aes(y = rank,
+                      x = value)) +
+        geom_segment(data=pd, aes(x=0, xend=value, y=rank, yend=rank), color="grey") +
+        geom_point(color='darkblue',alpha=.5,size=2) +
+        scale_y_continuous(breaks=1:nrow(pd),
+                           labels=pd$`Health Center`) +
+        #labs(title = 'Explore FQHC rankings') +
+        ylab(NULL) + xlab(fqhc_var) +
+        ggthemes:: theme_pander(base_size=15)
+
+      if(!input$fqhc_filter){
+        pd_hilite <- pd %>% filter(`Health Center` %in% input$health_center_name)
+        print(nrow(pd_hilite))
+        print(pd_hilite$rank)
+        p <- p +
+          geom_point(data=pd_hilite,
+                     aes(x=value,y=rank),
+                     color='red',alpha=.75,size=3) +
+          geom_segment(data=pd_hilite, aes(x=0, xend=value, y=rank, yend=rank), color="red")
+      }
+
+    } # end of null test
+
+    p
+  })
+
+
+  output$county_plot_2 <- renderPlotly({
+
+    # Naming inputs
+    cn <- input$county_name_2
+    pv <- input$plot_var_2
+    py <- input$plot_year_2
+
     # If no county is selected don't show a graph
     if(is.null(cn)){
       NULL
     } else {
       library(tidyr)
-      
+
       # The dataset will filter by the year the user selects
       pd <- health_data %>% filter(County == cn,
                                    Year == py) %>%
         select(pv, first_fqhc, first_share, second_fqhc, second_share)
-      
-      save(pd, file = 'temp.rda')
-      pd[,pv][grepl('NA', pd[, pv])] <- NA
+
       # If there is data for year chosen show plot
       if(!all(is.na(pd[,pv]))){
-=======
-    output$county_plot_2 <- renderPlotly({
-      
-      # Naming inputs
-      cn <- input$county_name_2
-      pv <- input$plot_var_2
-      py <- input$plot_year_2
-      
-      
-      # If no county is selected don't show a graph
-      if(is.null(cn)){
-        NULL
-      } else {
-        library(tidyr)
->>>>>>> 383b1a5 (update app)
-        
-        # The dataset will filter by the year the user selects
-        pd <- health_data %>% filter(County == cn,
-                                     Year == py) %>%
-          select(pv, first_fqhc, first_share, second_fqhc, second_share)
-        
-        # If there is data for year chosen show plot
-        if(!all(is.na(pd[,pv]))){
-          
-          # Names variables shown on hover over
-          f_name <- pd$first_fqhc
-          f_share <- pd$first_share
-          s_name <- pd$second_fqhc
-          s_share <- pd$second_share
-          
-          # Deletes columns from variable choices
-          pd$first_fqhc <- pd$first_share <- pd$second_fqhc <- pd$second_share <- NULL
-          
-          # Unlists variables
-          pd <- pd %>% gather()
-          
-          # Creates hover over text
-          plot_text <- paste(
-            'Dominant HC', ' : ', str_to_title(tolower(f_name)), "\n"
-            ,' Share of FQHC patients served : ', round(f_share*100, 2), ' % ', "\n",
-            'Secondary HC', ' : ', str_to_title(tolower(s_name)), "\n",
-            ' Share of FQHC patients served : ', round(s_share*100, 2), ' % ',
-            sep="") %>%
-            lapply(htmltools::HTML)
-          
-          # Turns decimals into percents
-          pd$value <- round( as.numeric(unlist(pd$value)), 2 )
-          if(pv %in% per_var){
-            for(i in 1:length(pd$value)){
-              message("i : ", i)
-              message("pd: ", str(pd))
-              if( !is.na(pd$value[i]) & pd$value[i] <= 1 ){
-                pd$value[i] <-  pd$value[i]*100
-              }
-            }
-          }
-          
-          # Creation of graph
-          p <- ggplot(data = pd,
-                      aes(x = gsub('_', ' ', key),
-                          y = value,
-                          text = plot_text)) +
-            geom_bar(stat = 'identity',
-                     color = 'Blue',
-                     fill = 'cornflowerblue') +
-            geom_text(aes(label = value)) +
-            labs(title = paste('Compare county health'),
-                 x = '',
-                 y = 'Value') +
-            ggthemes:: theme_pander() +
-            coord_flip()
-          
-          # Changes decimals to percentages and adds %
-          if(pv %in% per_var){
-            p <- p + scale_y_continuous(labels = function(x) paste0(x, "%"))  
-            
-          }
-          
-          # Formats hover over
-          ggplotly(p, tooltip = 'text') %>% style(textposition = 'right') %>%
-            layout(hoverlabel = list(bgcolor = 'white')) %>%
-            config(displayModeBar = F)
-          
-          # If there's no data for year chosen show empty plot
-        } else{
-          empty_plot <- function(title = NULL){
-            p <- plotly_empty(type = "scatter", mode = "markers") %>%
-              config(
-                displayModeBar = FALSE
-              ) %>%
-              layout(
-                title = list(
-                  text = title,
-                  yref = "paper",
-                  y = 0.5
-                )
-              )
-            return(p)
-          }
-          p <- empty_plot("No data available for the selected inputs")
-          ggplotly(p)
-        }
-        
-      }
-      
-    })
-    
-    output$county_plot <- renderPlotly({
-      
-      # Naming inputs
-      cn <- input$county_name
-      pv <- input$plot_var
-      idx <- which( hd_choices == pv )
-      y_lab = hd_labels[idx]
-      py <- input$plot_year
-      
-      # The dataset will filter by the year and county the user selects
-      pd <- health_data %>%
-        filter(County %in% cn,
-               Year == py)
-      
-      # Allows a character variable to be assigned as the y on the graph
-      names(pd)[names(pd) == pv] <- 'value'
-      
-      # If there's data for year chosen show plot
-      if(!all(is.na(pd$value))){
-        
-        # Turns decimals into percentages if variable is in per_var
-        if(pv %in% per_var){
-          pd$value <- as.numeric(unlist(pd$value))*100
-          
-        } else {
-          pd$value <- as.numeric(unlist(pd$value))
-          
-        }
+
+        # Names variables shown on hover over
+        f_name <- pd$first_fqhc
+        f_share <- pd$first_share
+        s_name <- pd$second_fqhc
+        s_share <- pd$second_share
+
+        # Deletes columns from variable choices
+        pd$first_fqhc <- pd$first_share <- pd$second_fqhc <- pd$second_share <- NULL
+
+        # Unlists variables
+        pd <- pd %>% gather()
+
         # Creates hover over text
         plot_text <- paste(
-          'Dominant HC : ', str_to_title(tolower(pd$first_fqhc)), "\n",
-          ' Share of FQHC patients served : ', round(pd$first_share*100, 2), ' % ', "\n",
-          'Secondary HC : ', str_to_title(tolower(pd$second_fqhc)), "\n",
-          ' Share of FQHC patients served : ', round(pd$second_share*100, 2), ' % ',
+          'Dominant HC', ' : ', str_to_title(tolower(f_name)), "\n"
+          ,' Share of FQHC patients served : ', round(f_share*100, 2), ' % ', "\n",
+          'Secondary HC', ' : ', str_to_title(tolower(s_name)), "\n",
+          ' Share of FQHC patients served : ', round(s_share*100, 2), ' % ',
           sep="") %>%
           lapply(htmltools::HTML)
-        
+
+        # Turns decimals into percents
+        pd$value <- round( as.numeric(unlist(pd$value)), 2 )
+        if(pv %in% per_var){
+          for(i in 1:length(pd$value)){
+            message("i : ", i)
+            message("pd: ", str(pd))
+            if( !is.na(pd$value[i]) & pd$value[i] <= 1 ){
+              pd$value[i] <-  pd$value[i]*100
+            }
+          }
+        }
+
         # Creation of graph
         p <- ggplot(data = pd,
-                    aes(x = County,
+                    aes(x = gsub('_', ' ', key),
                         y = value,
                         text = plot_text)) +
           geom_bar(stat = 'identity',
                    color = 'Blue',
                    fill = 'cornflowerblue') +
-          geom_text(aes(label = round(value,2)))+
-          labs(title = 'Compare county health') +
-          ggthemes:: theme_pander()
-        
+          geom_text(aes(label = value)) +
+          labs(title = paste('Compare county health'),
+               x = '',
+               y = 'Value') +
+          ggthemes:: theme_pander() +
+          coord_flip()
+
         # Changes decimals to percentages and adds %
         if(pv %in% per_var){
-          p <- p + scale_y_continuous(labels = function(x) paste0(x, "%"))  
+          p <- p + scale_y_continuous(labels = function(x) paste0(x, "%"))
+
         }
-        
-        # Labels y axis and flips coordinates
-        p <- p + labs(y=y_lab) + coord_flip()
-        
+
         # Formats hover over
-        ggplotly(p, tooltip = 'text') %>%  
-          style(textposition = 'right') %>%
+        ggplotly(p, tooltip = 'text') %>% style(textposition = 'right') %>%
           layout(hoverlabel = list(bgcolor = 'white')) %>%
           config(displayModeBar = F)
-        
+
         # If there's no data for year chosen show empty plot
-      } else {
+      } else{
         empty_plot <- function(title = NULL){
           p <- plotly_empty(type = "scatter", mode = "markers") %>%
             config(
@@ -791,145 +802,248 @@ ui <- dashboardPage(
         p <- empty_plot("No data available for the selected inputs")
         ggplotly(p)
       }
-      
-    })
-    
-    output$county_map <- renderLeaflet({
-      
-      # Names variables used in map
-      mv <- input$map_var
-      my <- input$map_year
-      
-      # Year selected is year shown
-      pd <- health_data %>% filter(Year == my)
-      
-      # Allows character to be y-value
-      names(pd)[names(pd)==mv] <- 'value'
-      
-      # Formats values as number out of lists
-      pd$value <- round(as.numeric(unlist(pd$value)), 2)
-      
-      # If there's data for year chosen show map
-      if(!all(is.na(pd$value))){
-        
-        # Joins the data in shape file to the filtered health_data
-        shp@data <- left_join(shp@data, pd, by =c('COUNTY'= 'County'))
-        
-        # Creates color palette for map
-        map_palette <- colorNumeric(palette = brewer.pal(9, "Blues"),
-                                    domain=shp@data$value,
-                                    na.color="black")
-        
-        # Turns decimals into percents and adds %
-        val <- shp@data$value
-        if(mv %in% per_var){
-          val <- val * 100
-          val <- paste0(val, '%')
-        }
-        
-        # Creates hover over text for map
-        map_text <- paste(
-          "County : ", shp@data$COUNTY, "<br/>",
-          "Value : ", val, "<br/>",
-          "Dominant HC : ", str_to_title(tolower(shp@data$first_fqhc)),"<br/>",
-          'Share of population served : ', round(shp@data$first_share*100,2),' % ',  "<br/>",
-          'Secondary HC : ', str_to_title(tolower(shp@data$second_fqhc)), "<br/>",
-          ' Share of population served : ', round(shp@data$second_share*100,2), ' % ',
-          sep="") %>%
-          lapply(htmltools::HTML)
-        
-        # Creates map
-        leaflet(shp) %>%
-          addProviderTiles('Esri.WorldShadedRelief') %>%
-          addPolygons(
-            color = 'black',
-            fillColor = ~map_palette(value),
-            stroke=TRUE,
-            fillOpacity = 0.9,
-            weight=1,
-            label = map_text,
-            highlightOptions = highlightOptions(
-              weight = 1,
-              fillColor = 'white',
-              fillOpacity = 1,
-              color = "white",
-              opacity = 1.0,
-              bringToFront = TRUE,
-              sendToBack = TRUE
-            ),
-            labelOptions = labelOptions(
-              noHide = FALSE,
-              style = list("font-weight" = "normal", padding = "3px 8px"),
-              textsize = "13px",
-              direction = "bottom"
-            )
-          )  %>%  
-          addLegend(pal=map_palette, title = '',
-                    values=~value,
-                    opacity=0.9,
-                    position = "bottomleft",
-                    na.label = "NA" )
-        
-        # If there's no data for year chosen show empty map
-      } else{
-        leaflet() %>%
-          addProviderTiles('Esri.WorldShadedRelief') %>%  
-          addLegend(title = 'No data available',
-                    colors = NA,
-                    labels = NA)
-        
-      }
-    })
-    
-    output$vaccination_plot <- renderPlotly({
-      cnv <- input$county_name_vacc
-      
-      flu <- health_data %>% 
-        dplyr::filter(Year == 2020) %>%
-        dplyr::group_by(County) %>%
-        dplyr::summarize(flu = as.numeric(Flu_Vaccinations_Medicare_Enrollees))
-      flu
-      
-      covid <- health_data %>% 
-        dplyr::filter(Year == 2021) %>%
-        dplyr::group_by(County) %>%
-        dplyr::summarize(covid = as.numeric((At_least_1_COVID_vaccine_dose)))
-      covid
-      
-      pd <- dplyr::left_join(flu,covid) 
-      pd
-      
-      # get row to highlight
-      row_we_want <- which(pd$County == cnv)
-      highlight_pd <- pd[row_we_want,]
-      
-      fit <- lm(flu~covid, data = pd)
-      summary(fit)
-      
-      predictions <- predict(fit, newdata=pd)
-      pd$predicted <- predictions
-      
-      pd$residual <- pd$flu-pd$predicted
-      
 
-      ggplot(data = pd,
-             aes(y = as.double(flu),
-                 x = as.double(covid))) +
-        geom_point(alpha = 0.5,
-                   color = 'red') +
-        xlim(0,100) +
-        ylim(0,100) +
-        geom_smooth(se = FALSE, color = 'blue', lty = 2, method = 'lm') +
-        labs(title = 'Vaccine Comparison',
-             x = "Covid Vaccination Percentage",
-             y = 'Flu Vaccination Percentage') + 
-        geom_point(data=highlight_pd,aes(x=as.double(flu),
-                                         y=as.double(covid)),
-                   color = 'red',
-                   size=5) 
-      
-    })
-    
-  }
-  
-  shinyApp(ui, server)
+    }
+
+  })
+
+  output$county_plot <- renderPlotly({
+
+    # Naming inputs
+    cn <- input$county_name
+    pv <- input$plot_var
+    idx <- which( hd_choices == pv )
+    y_lab = hd_labels[idx]
+    py <- input$plot_year
+
+    # The dataset will filter by the year and county the user selects
+    pd <- health_data %>%
+      filter(County %in% cn,
+             Year == py)
+
+    # Allows a character variable to be assigned as the y on the graph
+    names(pd)[names(pd) == pv] <- 'value'
+
+    # If there's data for year chosen show plot
+    if(!all(is.na(pd$value))){
+
+      # Turns decimals into percentages if variable is in per_var
+      if(pv %in% per_var){
+        pd$value <- as.numeric(unlist(pd$value))*100
+
+      } else {
+        pd$value <- as.numeric(unlist(pd$value))
+
+      }
+      # Creates hover over text
+      plot_text <- paste(
+        'Dominant HC : ', str_to_title(tolower(pd$first_fqhc)), "\n",
+        ' Share of FQHC patients served : ', round(pd$first_share*100, 2), ' % ', "\n",
+        'Secondary HC : ', str_to_title(tolower(pd$second_fqhc)), "\n",
+        ' Share of FQHC patients served : ', round(pd$second_share*100, 2), ' % ',
+        sep="") %>%
+        lapply(htmltools::HTML)
+
+      # Creation of graph
+      p <- ggplot(data = pd,
+                  aes(x = County,
+                      y = value,
+                      text = plot_text)) +
+        geom_bar(stat = 'identity',
+                 color = 'Blue',
+                 fill = 'cornflowerblue') +
+        geom_text(aes(label = round(value,2)))+
+        labs(title = 'Compare county health') +
+        ggthemes:: theme_pander()
+
+      # Changes decimals to percentages and adds %
+      if(pv %in% per_var){
+        p <- p + scale_y_continuous(labels = function(x) paste0(x, "%"))
+      }
+
+      # Labels y axis and flips coordinates
+      p <- p + labs(y=y_lab) + coord_flip()
+
+      # Formats hover over
+      ggplotly(p, tooltip = 'text') %>%
+        style(textposition = 'right') %>%
+        layout(hoverlabel = list(bgcolor = 'white')) %>%
+        config(displayModeBar = F)
+
+      # If there's no data for year chosen show empty plot
+    } else {
+      empty_plot <- function(title = NULL){
+        p <- plotly_empty(type = "scatter", mode = "markers") %>%
+          config(
+            displayModeBar = FALSE
+          ) %>%
+          layout(
+            title = list(
+              text = title,
+              yref = "paper",
+              y = 0.5
+            )
+          )
+        return(p)
+      }
+      p <- empty_plot("No data available for the selected inputs")
+      ggplotly(p)
+    }
+
+  })
+
+  output$county_map <- renderLeaflet({
+
+    # Names variables used in map
+    mv <- input$map_var
+    my <- input$map_year
+
+    # Year selected is year shown
+    pd <- health_data %>% filter(Year == my)
+
+    # Allows character to be y-value
+    names(pd)[names(pd)==mv] <- 'value'
+
+    # Formats values as number out of lists
+    pd$value <- round(as.numeric(unlist(pd$value)), 2)
+
+    # If there's data for year chosen show map
+    if(!all(is.na(pd$value))){
+
+      # Joins the data in shape file to the filtered health_data
+      shp@data <- left_join(shp@data, pd, by =c('COUNTY'= 'County'))
+
+      # Creates color palette for map
+      map_palette <- colorNumeric(palette = brewer.pal(9, "Blues"),
+                                  domain=shp@data$value,
+                                  na.color="black")
+
+      # Turns decimals into percents and adds %
+      val <- shp@data$value
+      if(mv %in% per_var){
+        val <- val * 100
+        val <- paste0(val, '%')
+      }
+
+      # Creates hover over text for map
+      map_text <- paste(
+        "County : ", shp@data$COUNTY, "<br/>",
+        "Value : ", val, "<br/>",
+        "Dominant HC : ", str_to_title(tolower(shp@data$first_fqhc)),"<br/>",
+        'Share of population served : ', round(shp@data$first_share*100,2),' % ',  "<br/>",
+        'Secondary HC : ', str_to_title(tolower(shp@data$second_fqhc)), "<br/>",
+        ' Share of population served : ', round(shp@data$second_share*100,2), ' % ',
+        sep="") %>%
+        lapply(htmltools::HTML)
+
+      # Creates map
+      leaflet(shp) %>%
+        addProviderTiles('Esri.WorldShadedRelief') %>%
+        addPolygons(
+          color = 'black',
+          fillColor = ~map_palette(value),
+          stroke=TRUE,
+          fillOpacity = 0.9,
+          weight=1,
+          label = map_text,
+          highlightOptions = highlightOptions(
+            weight = 1,
+            fillColor = 'white',
+            fillOpacity = 1,
+            color = "white",
+            opacity = 1.0,
+            bringToFront = TRUE,
+            sendToBack = TRUE
+          ),
+          labelOptions = labelOptions(
+            noHide = FALSE,
+            style = list("font-weight" = "normal", padding = "3px 8px"),
+            textsize = "13px",
+            direction = "bottom"
+          )
+        )  %>%
+        addLegend(pal=map_palette, title = '',
+                  values=~value,
+                  opacity=0.9,
+                  position = "bottomleft",
+                  na.label = "NA" )
+
+      # If there's no data for year chosen show empty map
+    } else{
+      leaflet() %>%
+        addProviderTiles('Esri.WorldShadedRelief') %>%
+        addLegend(title = 'No data available',
+                  colors = NA,
+                  labels = NA)
+
+    }
+  })
+
+  output$vaccination_plot <- renderPlotly({
+    cnv <- input$county_name_vacc
+
+    flu <- health_data %>%
+      dplyr::filter(Year == 2020) %>%
+      dplyr::group_by(County) %>%
+      dplyr::summarize(flu = as.numeric(Flu_Vaccinations_Medicare_Enrollees))
+    flu
+
+    covid <- health_data %>%
+      dplyr::filter(Year == 2021) %>%
+      dplyr::group_by(County) %>%
+      dplyr::summarize(covid = as.numeric((At_least_1_COVID_vaccine_dose)))
+    covid
+
+    pd <- dplyr::left_join(flu,covid)
+    pd
+
+    # get row to highlight
+    row_we_want <- which(pd$County == cnv)
+    highlight_pd <- pd[row_we_want,]
+
+    fit <- lm(flu~covid, data = pd)
+    summary(fit)
+
+    predictions <- predict(fit, newdata=pd)
+    pd$predicted <- predictions
+
+    pd$residual <- pd$flu-pd$predicted
+
+    #plot_text <- paste(
+    #  'Covid Vaccination Percentage : ', "\n"
+    #  ,'Flu Vaccination Percentage : ', "\n",
+    #  sep="") %>%
+    #  lapply(htmltools::HTML)
+
+    p <- ggplot(data = pd,
+                aes(x = covid,
+                    y = flu , text=County
+                )) +
+      geom_point(alpha = 0.3,
+                 color = 'darkblue') +
+      xlim(0,100) +
+      ylim(0,100) +
+      geom_smooth(se = FALSE, color = 'darkblue', lty = 2, method = 'lm') +
+      labs(title = 'Vaccination rates: Flu vs. COVID-19',
+           x = "COVID-19",
+           y = 'Flu')
+
+    if(!is.null(cnv)){
+      if(cnv != ""){
+        p <- p + geom_point(data=highlight_pd,
+                            aes(x=covid,
+                                y=flu #,text = plot_text
+                            ),
+                            color = 'firebrick',
+                            alpha = .7,
+                            size=5)
+      }
+    }
+
+    p
+
+  })
+
+}
+
+shinyApp(ui, server)
