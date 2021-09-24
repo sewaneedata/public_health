@@ -18,6 +18,7 @@ library(stringr)
 library(gsheet)
 #library(gghighlight)
 library(tidyverse)
+library(googlesheets4)
 
 if(grepl('marthaclark', getwd())){
   setwd('/Users/marthaclark/Documents/DataLab/public_health//')
